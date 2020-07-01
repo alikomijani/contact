@@ -16,17 +16,17 @@
 <body>
   <div id="root" class="container-fluid my-3">
     <div class="container p-4">
-    <form>
-      <div class="input-group">
-        <input type="text" class="form-control" placeholder="Search">
-        <div class="input-group-btn">
-          <button class="btn btn-primary" type="submit">
-            <i class="fa fa-search"></i>
-          </button>
+      <form id='search-form'>
+        <div class="input-group">
+          <input type="text" name='search' id='search' class="form-control" placeholder="Search">
+          <div class="input-group-btn">
+            <button class="btn btn-primary" type="submit">
+              <i class="fa fa-search"></i>
+            </button>
+          </div>
         </div>
-      </div>
-    </form>
-  </div>
+      </form>
+    </div>
     <div id="main">
       <div id="table" class="table-responsive mx-2 ">
         <table id='contact_table' class="table table-striped table-hover">
@@ -43,13 +43,11 @@
               <th>action</th>
             </tr>
           </thead>
-
-
         </table>
         <button class="btn btn-primary" onclick="show_form()">Add</button>
         <button class="btn btn-secondary" onclick="hide_form()">Cancel</button>
       </div>
-      <div id="form" class="">
+      <div id="form">
         <form id='contact_form'>
           <div class="form-group">
             <label for="id_name">ID: </label>
@@ -105,7 +103,35 @@
     integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous">
   </script>
   <script>
-    renderTable();
+    renderTable(JSON.parse(localStorage.getItem('contactList')));
+    check_birthday();
+    function check_birthday(){
+      const contacts = JSON.parse(localStorage.getItem('contactList'));
+      contacts.forEach(contact=>{
+        birthday = new Date(contact.birthday);
+        const birthday_day = birthday.getDate();
+        const birthday_month = birthday.getMonth();
+        today = new Date();
+        const today_day = today.getDate();
+        const today_month = today.getMonth();
+        if(today_day==birthday_day && today_month == birthday_month){
+          Swal.fire({
+            title: 'happy birhday!',
+            text: `today is birthday of ${contact.name} ${contact.lastName}`,
+            imageUrl: 'https://www.readersdigest.ca/wp-content/uploads/2019/02/hilarious-birthday-jokes.jpg',
+            imageWidth: 400,
+            imageHeight: 200,
+            imageAlt: 'Custom image',
+          })
+
+        }
+      })
+      
+    }
+    function setContacts(contacts) {
+      localStorage.setItem('contactList', JSON.stringify(contacts));
+      renderTable(contacts);
+    }
 
     function edit(id) {
       let contactList = JSON.parse(localStorage.getItem('contactList'));
@@ -125,23 +151,15 @@
     function remove_contact(id) {
       let contactList = JSON.parse(localStorage.getItem('contactList'));
       contactList = contactList.filter((item) => item.id != id)
-      localStorage.setItem('contactList', JSON.stringify(contactList))
-      renderTable();
+      setContacts(contactList);
     }
 
-    function renderTable() {
-      const contactList = JSON.parse(localStorage.getItem('contactList'));
-      if (!contactList) {
-        localStorage.setItem('contactList', JSON.stringify([]))
-        return;
-      }
+    function renderTable(contactList = []) {
       const tbody2 = document.getElementsByTagName('tbody');
       if (tbody2.length > 0) {
         tbody2[0].remove();
       }
-
       const table = document.getElementById('contact_table');
-
       const tbody = document.createElement("TBODY");
       contactList.map((contact) => {
         const tr = document.createElement("TR");
@@ -180,10 +198,20 @@
         contactList.push(new_contact);
       }
 
-      localStorage.setItem('contactList', JSON.stringify(contactList))
+      setContacts(contactList);
       hide_form();
-      renderTable();
+
       event.target.reset();
+    });
+
+
+    document.getElementById("search-form").addEventListener("submit", function (event) {
+      event.preventDefault();
+      let contactList = JSON.parse(localStorage.getItem('contactList'));
+      const search = document.getElementById('search').value;
+      contactList = contactList.filter(item => item.name.toLowerCase().startsWith(search.toLowerCase()) || item
+        .lastName.toLowerCase().startsWith(search.toLowerCase()));
+      renderTable(contactList);
     });
 
     function delete_contact(id) {
